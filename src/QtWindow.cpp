@@ -104,6 +104,9 @@ QtWindow::QtWindow()
     m_tutorWindow = new QTextBrowser(this);
     m_tutorWindow->hide();
 
+    m_aiMentorBridge = new AiMentorBridge(this);
+    m_aiMentorPanel = new GuiAiMentorPanel(this, m_settings, m_aiMentorBridge);
+
     m_settings->init(m_song, m_sidePanel, m_topBar);
 
     mainLayout->addWidget(m_sidePanel);
@@ -113,14 +116,22 @@ QtWindow::QtWindow()
     mainLayout->addLayout(columnLayout);
 
     m_song->init2(m_score, m_settings);
+    m_song->setAiMentorBridge(m_aiMentorBridge);
 
     m_sidePanel->init(m_song, m_song->getTrackList(), m_topBar);
     m_topBar->init(m_song);
+    m_aiMentorPanel->init(m_song, m_sidePanel, m_topBar);
 
     QWidget *centralWin = new QWidget();
     centralWin->setLayout(mainLayout);
 
     setCentralWidget(centralWin);
+
+    m_mentorDock = new QDockWidget(tr("AI Piano Mentor"), this);
+    m_mentorDock->setObjectName("AiMentorDock");
+    m_mentorDock->setWidget(m_aiMentorPanel);
+    m_mentorDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    addDockWidget(Qt::RightDockWidgetArea, m_mentorDock);
 
     m_glWidget->setFocus(Qt::ActiveWindowFocusReason);
 
@@ -370,6 +381,11 @@ void QtWindow::createActions()
     }
     connect(m_viewPianoKeyboard, SIGNAL(triggered()), this, SLOT(onViewPianoKeyboard()));
 
+    m_viewAiMentorAct = m_mentorDock->toggleViewAction();
+    m_viewAiMentorAct->setText(tr("Show AI &Mentor Panel"));
+    m_viewAiMentorAct->setToolTip(tr("Show or hide the AI Piano Mentor panel"));
+    m_viewAiMentorAct->setShortcut(tr("Ctrl+M"));
+
     m_setupPreferencesAct = new QAction(tr("&Preferences ..."), this);
     m_setupPreferencesAct->setToolTip(tr("Settings"));
     m_setupPreferencesAct->setShortcut(tr("Ctrl+P"));
@@ -427,6 +443,7 @@ void QtWindow::createMenus()
     m_viewMenu->addAction(m_sidePanelStateAct);
     m_viewMenu->addAction(m_fullScreenStateAct);
     m_viewMenu->addAction(m_viewPianoKeyboard);
+    m_viewMenu->addAction(m_viewAiMentorAct);
 
     m_songMenu = menuBar()->addMenu(tr("&Song"));
     m_songMenu->setToolTipsVisible(true);

@@ -37,6 +37,7 @@
 #include "Score.h"
 #include "Piano.h"
 #include "Cfg.h"
+#include "AiMentorBridge.h"
 
 playMode_t CConductor::m_playMode = PB_PLAY_MODE_listen;
 
@@ -45,6 +46,7 @@ CConductor::CConductor()
     m_scoreWin = nullptr;
     m_settings = nullptr;
     m_piano = nullptr;
+    m_aiMentorBridge = nullptr;
 
     m_songEventQueue = new CQueue<CMidiEvent>(1000);
     m_wantedChordQueue = new CQueue<CChord>(1000);
@@ -341,17 +343,26 @@ void CConductor::playMusic(bool start)
         if (seekingBarNumber())
             resetWantedChord();
 
-        /*
-        const unsigned char gsModeEnterData[] =  {0xf0, 0x41, 0x10, 0x42, 0x12, 0x40, 0x00, 0x7f, 0x00, 0x41, 0xf7};
-
-        for (auto &d : gsModeEnterData)
+        if (m_aiMentorBridge)
         {
-            event.collateRawByte(0, d);
-            playTrackEvent(event);
+            QString modeStr = "followYou";
+            if (m_playMode == PB_PLAY_MODE_listen) modeStr = "listen";
+            else if (m_playMode == PB_PLAY_MODE_rhythmTapping) modeStr = "rhythmTapping";
+            else if (m_playMode == PB_PLAY_MODE_followYou) modeStr = "followYou";
+            else if (m_playMode == PB_PLAY_MODE_playAlong) modeStr = "playAlong";
+
+            whichPart_t hand = (m_wantedChord.length() > 0) ? m_wantedChord.getPart(0) : PB_PART_both;
+            QString handStr = (hand == PB_PART_right) ? "right" : ((hand == PB_PART_left) ? "left" : "both");
+
+            m_aiMentorBridge->startNewSession(m_settings ? m_settings->getCurrentSongShortFileName() : "", getSpeed(), modeStr, handStr);
         }
-        event.outputCollatedRawBytes(0);
-        playTrackEvent(event);
-        */
+    }
+    else
+    {
+        if (m_aiMentorBridge && m_rating.totalNoteCount() > 0)
+        {
+            m_aiMentorBridge->finalizeSession(m_rating.totalNoteCount(), m_rating.wrongNoteCount(), m_rating.lateNoteCount(), m_rating.rating());
+        }
     }
 }
 
@@ -650,6 +661,11 @@ void CConductor::pianistInput(CMidiEvent inputNote)
                         (!m_followPlayingTimeOut)? Cfg::playedGoodColor():Cfg::playedBadColor(),
                         m_chordDeltaTime, pianistTiming);
 
+            if (m_aiMentorBridge)
+            {
+                m_aiMentorBridge->recordNoteEvent(getBarNumber(), inputNote.note(), inputNote.note(), m_pianistTiming, "hit");
+            }
+
             if (validatePianistChord() == true)
             {
                 if (m_chordDeltaTime < 0)
@@ -676,6 +692,12 @@ void CConductor::pianistInput(CMidiEvent inputNote)
 
                 m_piano->addPianistNote(hand, inputNote, false);
                 m_rating.wrongNotes(1);
+
+                if (m_aiMentorBridge)
+                {
+                    int expected = (m_wantedChord.length() > 0) ? m_wantedChord.getNote(0) : 0;
+                    m_aiMentorBridge->recordNoteEvent(getBarNumber(), expected, inputNote.note(), 0, "wrong");
+                }
 
                 if (m_settings->followThroughErrors() && m_playMode == PB_PLAY_MODE_followYou) // If the setting is checked, errors cause following too
                   {

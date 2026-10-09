@@ -38,6 +38,8 @@
 #include "GuiPreferencesDialog.h"
 #include "GuiSongDetailsDialog.h"
 #include "GuiLoopingPopup.h"
+#include "GuiAiMentorPanel.h"
+#include "AiMentorBridge.h"
 #include "Settings.h"
 
 class CGLView;
@@ -63,6 +65,12 @@ public:
     void songEventUpdated(eventBits_t eventBits)
     {
         if ((eventBits & EVENT_BITS_playingStopped) != 0){
+            if (m_aiMentorBridge && m_song) {
+                CRating* rating = m_song->getRating();
+                if (rating && rating->totalNoteCount() > 0) {
+                    m_aiMentorBridge->finalizeSession(rating->totalNoteCount(), rating->wrongNoteCount(), rating->lateNoteCount(), rating->rating());
+                }
+            }
             if (m_sidePanel->isRepeatSong()){
                 m_topBar->on_playFromStartButton_clicked(true);
             }else{
@@ -229,6 +237,11 @@ private:
     QAction *m_separatorAct;
 
     QAction *m_recentFileActs[maxRecentFiles()];
+
+    AiMentorBridge *m_aiMentorBridge;
+    GuiAiMentorPanel *m_aiMentorPanel;
+    QDockWidget *m_mentorDock;
+    QAction *m_viewAiMentorAct;
 };
 
 #endif // __QT_WINDOW_H__

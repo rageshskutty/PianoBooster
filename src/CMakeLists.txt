@@ -10,7 +10,7 @@ else()
    option(USE_BUNDLED_RTMIDI "Build with bundled rtmidi" ON)
 endif()
 
-cmake_minimum_required(VERSION 2.4)
+cmake_minimum_required(VERSION 3.16)
 if(COMMAND cmake_policy)
     cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
@@ -74,8 +74,8 @@ endif()
 
 # Finds Qt libraries
 set(QT_PACKAGE_NAME Qt5 CACHE STRING "Name of the Qt package to use, set e.g. to \"Qt6\" to use Qt 6")
-set(QT_COMPONENTS Core Gui Widgets LinguistTools OpenGL Xml)
-set(QT_LIBS ${QT_PACKAGE_NAME}::Core ${QT_PACKAGE_NAME}::Gui ${QT_PACKAGE_NAME}::Widgets ${QT_PACKAGE_NAME}::Xml ${QT_PACKAGE_NAME}::OpenGL)
+set(QT_COMPONENTS Core Gui Widgets LinguistTools OpenGL Xml Network)
+set(QT_LIBS ${QT_PACKAGE_NAME}::Core ${QT_PACKAGE_NAME}::Gui ${QT_PACKAGE_NAME}::Widgets ${QT_PACKAGE_NAME}::Xml ${QT_PACKAGE_NAME}::OpenGL ${QT_PACKAGE_NAME}::Network)
 if (QT_PACKAGE_NAME STREQUAL Qt6)
     list(APPEND QT_COMPONENTS OpenGLWidgets Core5Compat)
     list(APPEND QT_LIBS ${QT_PACKAGE_NAME}::OpenGLWidgets ${QT_PACKAGE_NAME}::Core5Compat)
@@ -186,6 +186,8 @@ SET( PIANOBOOSTER_SRCS
     Bar.cpp
     Settings.cpp
     Merge.cpp
+    AiMentorBridge.cpp
+    GuiAiMentorPanel.cpp
     pianobooster.rc
     images/pianobooster.ico
 )
@@ -201,6 +203,8 @@ SET( PIANOBOOSTER_MOC_HDRS
     GuiPreferencesDialog.h
     GuiSongDetailsDialog.h
     GuiLoopingPopup.h
+    GuiAiMentorPanel.h
+    AiMentorBridge.h
 )
 
 # some .ui files
@@ -212,6 +216,7 @@ SET( PIANOBOOSTER_UIS
     ./GuiPreferencesDialog.ui
     ./GuiSongDetailsDialog.ui
     ./GuiLoopingPopup.ui
+    ./GuiAiMentorPanel.ui
 )
 
 # and finally an resource file

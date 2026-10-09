@@ -41,6 +41,7 @@
 class CScore;
 class CPiano;
 class CSettings;
+class AiMentorBridge;
 
 typedef enum {
     PB_FOLLOW_searching,
@@ -167,6 +168,9 @@ public:
 
     CRating* getRating(){return &m_rating;}
 
+    void setAiMentorBridge(AiMentorBridge* bridge) { m_aiMentorBridge = bridge; }
+    AiMentorBridge* getAiMentorBridge() { return m_aiMentorBridge; }
+
     // You MUST clear the time sig to 0 first before setting an new start time Sig
     void setTimeSig(int top, int bottom) { m_bar.setTimeSig(top, bottom);}
 
@@ -208,6 +212,7 @@ public:
 protected:
     CScore* m_scoreWin;
     CSettings* m_settings;
+    AiMentorBridge* m_aiMentorBridge;
 
     CQueue<CMidiEvent>* m_songEventQueue;
     CQueue<CChord>* m_wantedChordQueue;
